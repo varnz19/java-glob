@@ -5,19 +5,19 @@ import java.util.List;
 
 public class PlaylistDTO implements Serializable {
 
-    private String playlistName;
-    private List<String> songTitles;
+    private String name;
+    private List<String> songs;
 
-    public PlaylistDTO(String playlistName, List<String> songTitles) {
-        this.playlistName = playlistName;
-        this.songTitles = songTitles;
+    public PlaylistDTO(String name, List<String> songs) {
+        this.name = name;
+        this.songs = songs;
     }
 
-    public String getPlaylistName() {
-        return playlistName;
+    public String getName() {
+        return name;
     }
 
-    public List<String> getSongTitles() {
-        return songTitles;
+    public List<String> getSongs() {
+        return songs;
     }
 }

@@ -9,7 +9,8 @@ import java.util.List;
 
 public class FileManager {
 
-    public static void savePlaylistsAsDTO(List<Playlist> playlists, String filename, User user) throws Exception {
+    // Save playlists as DTO objects
+    public static void savePlaylistsAsDTO(List<Playlist> playlists, String filename) throws Exception {
 
         List<PlaylistDTO> dtoList = new ArrayList<>();
 
@@ -25,6 +26,7 @@ public class FileManager {
         }
     }
 
+    // Save user preferences (simple string)
     public static void saveUserPreferences(String filename, User user) throws Exception {
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {

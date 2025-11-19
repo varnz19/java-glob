@@ -2,29 +2,29 @@ package spotify_app.gui;
 
 import spotify_app.models.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.List;
 import java.util.LinkedList;
-import javax.imageio.ImageIO;
+import java.util.List;
 
 /**
- * Simple GUI matching the user's expected layout (Option C).
- * Place this file at: src/spotify_app/gui/SpotifyGUI.java
+ * Modern, clean Spotify-like GUI (Option A).
+ * Drop-in replacement: src/spotify_app/gui/SpotifyGUI.java
  *
- * Uses the uploaded artwork file at: /mnt/data/bf86e486-1a0a-4d82-9cf0-9a135369f3aa.png
+ * Uses artwork file path: /mnt/data/bf86e486-1a0a-4d82-9cf0-9a135369f3aa.png
  */
 public class SpotifyGUI {
 
-    // Use the uploaded image as the album artwork
     private static final String ARTWORK_PATH = "/mnt/data/bf86e486-1a0a-4d82-9cf0-9a135369f3aa.png";
 
-    // Theme colors
     private static final Color BG = new Color(14,14,14);
     private static final Color PANEL = new Color(24,24,24);
     private static final Color SIDEBAR = new Color(18,18,18);
@@ -32,72 +32,65 @@ public class SpotifyGUI {
     private static final Color TEXT = new Color(230,230,230);
     private static final Color DIM = new Color(160,160,160);
 
-    /**
-     * Create and show the GUI.
-     * nowPlaying: currently playing Song
-     * playlists: list of Playlist objects (first becomes "My Favorites 2024" if present)
-     * queue: LinkedList<Song> queue (can be null)
-     */
     public static void createAndShowGUI(Song nowPlaying, List<Playlist> playlists, LinkedList<Song> queue) {
+        if (nowPlaying == null) throw new IllegalArgumentException("nowPlaying cannot be null");
+
         JFrame frame = new JFrame("Spotify Music Player");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000,650);
-        frame.setMinimumSize(new Dimension(820,520));
+        frame.setSize(1100, 660);
+        frame.setMinimumSize(new Dimension(880, 540));
         frame.getContentPane().setBackground(BG);
         frame.setLayout(new BorderLayout());
 
         // ---------- LEFT SIDEBAR ----------
         JPanel sidebar = new JPanel();
         sidebar.setBackground(SIDEBAR);
-        sidebar.setPreferredSize(new Dimension(260, frame.getHeight()));
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(new EmptyBorder(12,12,12,12));
+        sidebar.setBorder(new EmptyBorder(18, 18, 18, 18));
+        sidebar.setPreferredSize(new Dimension(260, frame.getHeight()));
 
-        JLabel title = new JLabel("CODECLASH"); // header/title
-        title.setForeground(ACCENT);
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel brand = new JLabel("Spotify");
+        brand.setForeground(ACCENT);
+        brand.setFont(brand.getFont().deriveFont(Font.BOLD, 20f));
+        brand.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton home = makeSidebarButton("Home");
         JButton search = makeSidebarButton("Search");
 
         JLabel libraryLabel = new JLabel("Your Library");
         libraryLabel.setForeground(DIM);
+        libraryLabel.setBorder(new EmptyBorder(14,0,8,0));
         libraryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        libraryLabel.setBorder(new EmptyBorder(10,0,6,0));
 
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        listModel.addElement("My Favorites 2024");
-        listModel.addElement("Chill Vibes");
-        listModel.addElement("Workout Mix");
-        listModel.addElement("Recently Played");
+        DefaultListModel<String> model = new DefaultListModel<>();
+        model.addElement("My Favorites 2024");
+        model.addElement("Chill Vibes");
+        model.addElement("Workout Mix");
+        model.addElement("Recently Played");
+        if (playlists != null && playlists.size() > 0) model.set(0, playlists.get(0).getName());
 
-        if (playlists != null && playlists.size() > 0) {
-            listModel.set(0, playlists.get(0).getName()); // prefer user's first playlist as top element
-        }
+        JList<String> playlistList = new JList<>(model);
+        playlistList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        playlistList.setBackground(new Color(10,14,16));
+        playlistList.setForeground(Color.WHITE);
+        playlistList.setFixedCellHeight(30);
+        JScrollPane playlistScroll = new JScrollPane(playlistList);
+        playlistScroll.setBorder(BorderFactory.createEmptyBorder());
+        playlistScroll.setPreferredSize(new Dimension(240, 300));
 
-        JList<String> playlistsJ = new JList<>(listModel);
-        playlistsJ.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        playlistsJ.setBackground(new Color(10,14,16));
-        playlistsJ.setForeground(Color.WHITE);
-        playlistsJ.setFixedCellHeight(28);
-        JScrollPane listScroll = new JScrollPane(playlistsJ);
-        listScroll.setBorder(BorderFactory.createEmptyBorder());
-        listScroll.setPreferredSize(new Dimension(240, 280));
-
-        sidebar.add(title);
-        sidebar.add(Box.createRigidArea(new Dimension(0,12)));
+        sidebar.add(brand);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 16)));
         sidebar.add(home);
-        sidebar.add(Box.createRigidArea(new Dimension(0,8)));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
         sidebar.add(search);
-        sidebar.add(Box.createRigidArea(new Dimension(0,14)));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 18)));
         sidebar.add(libraryLabel);
-        sidebar.add(listScroll);
+        sidebar.add(playlistScroll);
 
-        // ---------- CENTER (Now Playing) ----------
+        // ---------- CENTER: Now Playing ----------
         JPanel center = new JPanel(new BorderLayout());
         center.setBackground(PANEL);
-        center.setBorder(new EmptyBorder(18,18,18,18));
+        center.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JLabel nowLabel = new JLabel("Now Playing");
         nowLabel.setForeground(TEXT);
@@ -107,152 +100,172 @@ public class SpotifyGUI {
         JPanel nowPanel = new JPanel();
         nowPanel.setBackground(PANEL);
         nowPanel.setLayout(new BoxLayout(nowPanel, BoxLayout.Y_AXIS));
-        nowPanel.setBorder(new EmptyBorder(12,12,12,12));
+        nowPanel.setBorder(new EmptyBorder(18, 18, 18, 18));
 
-        // artwork
-        JLabel artwork = new JLabel();
-        artwork.setPreferredSize(new Dimension(300,300));
-        artwork.setMaximumSize(new Dimension(350,350));
-        artwork.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Artwork (try load, else placeholder)
+        JLabel artworkLabel = new JLabel();
+        artworkLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        artworkLabel.setPreferredSize(new Dimension(320, 320));
+        artworkLabel.setMaximumSize(new Dimension(360, 360));
+        artworkLabel.setBorder(BorderFactory.createLineBorder(new Color(60,60,60)));
+
         try {
             File f = new File(ARTWORK_PATH);
             if (f.exists()) {
                 BufferedImage img = ImageIO.read(f);
-                Image scaled = img.getScaledInstance(300,300,Image.SCALE_SMOOTH);
-                artwork.setIcon(new ImageIcon(scaled));
+                Image scaled = img.getScaledInstance(320, 320, Image.SCALE_SMOOTH);
+                artworkLabel.setIcon(new ImageIcon(scaled));
             } else {
-                artwork.setText("[ Album artwork ]");
-                artwork.setForeground(DIM);
-                artwork.setHorizontalAlignment(SwingConstants.CENTER);
+                artworkLabel.setText("[ Album artwork ]");
+                artworkLabel.setForeground(DIM);
+                artworkLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                artworkLabel.setPreferredSize(new Dimension(320,320));
             }
         } catch (Exception ex) {
-            artwork.setText("[ Album artwork ]");
-            artwork.setForeground(DIM);
-            artwork.setHorizontalAlignment(SwingConstants.CENTER);
+            artworkLabel.setText("[ Album artwork ]");
+            artworkLabel.setForeground(DIM);
+            artworkLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            artworkLabel.setPreferredSize(new Dimension(320,320));
         }
 
-        // song title and artist
-        JLabel songTitle = new JLabel("Song title: " + nowPlaying.getTitle());
-        songTitle.setForeground(TEXT);
-        songTitle.setFont(songTitle.getFont().deriveFont(Font.BOLD, 15f));
-        songTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        songTitle.setBorder(new EmptyBorder(8,0,4,0));
+        JLabel title = new JLabel(nowPlaying.getTitle());
+        title.setForeground(TEXT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setBorder(new EmptyBorder(12, 0, 2, 0));
 
-        String artistName = (nowPlaying instanceof Track) ? ((Track)nowPlaying).getArtist() : "Various";
-        JLabel songArtist = new JLabel("Artist: " + artistName);
-        songArtist.setForeground(DIM);
-        songArtist.setAlignmentX(Component.CENTER_ALIGNMENT);
+        String artistText = (nowPlaying instanceof Track) ? ((Track) nowPlaying).getArtist() : "Various";
+        JLabel artist = new JLabel(artistText);
+        artist.setForeground(DIM);
+        artist.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // progress
         JSlider progress = new JSlider(0, nowPlaying.getDuration(), 0);
         progress.setAlignmentX(Component.CENTER_ALIGNMENT);
-        progress.setPreferredSize(new Dimension(700, 18));
+        progress.setPreferredSize(new Dimension(680, 16));
+        progress.setOpaque(false);
+
         JLabel progLabel = new JLabel("0:00 / " + nowPlaying.getFormattedDuration());
         progLabel.setForeground(TEXT);
         progLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        progLabel.setBorder(new EmptyBorder(6,0,0,0));
+        progLabel.setBorder(new EmptyBorder(8,0,0,0));
 
-        nowPanel.add(artwork);
+        nowPanel.add(artworkLabel);
         nowPanel.add(Box.createRigidArea(new Dimension(0,12)));
-        nowPanel.add(songTitle);
-        nowPanel.add(songArtist);
-        nowPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        nowPanel.add(title);
+        nowPanel.add(artist);
+        nowPanel.add(Box.createRigidArea(new Dimension(0,14)));
         nowPanel.add(progress);
         nowPanel.add(progLabel);
 
         center.add(nowPanel, BorderLayout.CENTER);
 
-        // ---------- BOTTOM CONTROLS ----------
-        JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBackground(new Color(20,20,20));
-        bottom.setBorder(new EmptyBorder(8,12,8,12));
+        // ---------- BOTTOM PLAYER BAR ----------
+        JPanel bottomBar = new JPanel(new BorderLayout());
+        bottomBar.setBackground(new Color(20,20,20));
+        bottomBar.setBorder(new EmptyBorder(10, 14, 10, 14));
 
-        // center controls
-        JPanel controls = new JPanel();
-        controls.setBackground(bottom.getBackground());
-        controls.setLayout(new BoxLayout(controls, BoxLayout.X_AXIS));
-        controls.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // center controls (prev/play/next + progress + shuffle/repeat)
+        JPanel centerControls = new JPanel();
+        centerControls.setOpaque(false);
+        centerControls.setLayout(new BoxLayout(centerControls, BoxLayout.X_AXIS));
+        centerControls.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JButton prev = controlBtn("⏮️");
-        JButton play = controlBtn("⏯️");
-        JButton next = controlBtn("⏭️");
-        JButton shuffle = controlBtn("🔀");
-        JButton repeat = controlBtn("🔁");
-        JButton like = controlBtn("❤️");
+        JButton prevBtn = controlBtn("⏮️");
+        JButton playBtn = controlBtn("⏯️");
+        JButton nextBtn = controlBtn("⏭️");
+        JButton shuffleBtn = controlBtn("🔀");
+        JButton repeatBtn = controlBtn("🔁");
 
-        controls.add(prev);
-        controls.add(Box.createRigidArea(new Dimension(8,0)));
-        controls.add(play);
-        controls.add(Box.createRigidArea(new Dimension(8,0)));
-        controls.add(next);
-        controls.add(Box.createRigidArea(new Dimension(16,0)));
+        centerControls.add(prevBtn);
+        centerControls.add(Box.createRigidArea(new Dimension(10,0)));
+        centerControls.add(playBtn);
+        centerControls.add(Box.createRigidArea(new Dimension(10,0)));
+        centerControls.add(nextBtn);
+        centerControls.add(Box.createRigidArea(new Dimension(20,0)));
 
-        // mini progress (visual)
-        JSlider mini = new JSlider(0, nowPlaying.getDuration(), 0);
-        mini.setPreferredSize(new Dimension(360, 14));
-        mini.setOpaque(false);
-        controls.add(mini);
-        controls.add(Box.createRigidArea(new Dimension(12,0)));
-        controls.add(shuffle);
-        controls.add(Box.createRigidArea(new Dimension(8,0)));
-        controls.add(repeat);
+        // a compact progress group with time labels
+        JPanel progressGroup = new JPanel(new BorderLayout());
+        progressGroup.setOpaque(false);
+        JPanel times = new JPanel(new BorderLayout());
+        times.setOpaque(false);
+        JLabel startTime = new JLabel("0:00");
+        startTime.setForeground(DIM);
+        JLabel endTime = new JLabel(nowPlaying.getFormattedDuration());
+        endTime.setForeground(DIM);
+        progressGroup.add(progress, BorderLayout.CENTER);
 
-        // right: volume & like
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        right.setBackground(bottom.getBackground());
-        JLabel volLbl = new JLabel("Vol");
-        volLbl.setForeground(DIM);
-        volLbl.setBorder(new EmptyBorder(0,0,0,4));
-        JSlider vol = new JSlider(0,100,75);
-        vol.setPreferredSize(new Dimension(120,14));
-        vol.setOpaque(false);
-        right.add(volLbl);
-        right.add(vol);
-        right.add(like);
+        JPanel timePanel = new JPanel(new BorderLayout());
+        timePanel.setOpaque(false);
+        timePanel.add(startTime, BorderLayout.WEST);
+        timePanel.add(endTime, BorderLayout.EAST);
+        progressGroup.add(timePanel, BorderLayout.SOUTH);
 
-        bottom.add(controls, BorderLayout.CENTER);
-        bottom.add(right, BorderLayout.EAST);
+        centerControls.add(progressGroup);
+        centerControls.add(Box.createRigidArea(new Dimension(12,0)));
+        centerControls.add(shuffleBtn);
+        centerControls.add(Box.createRigidArea(new Dimension(8,0)));
+        centerControls.add(repeatBtn);
+
+        bottomBar.add(centerControls, BorderLayout.CENTER);
+
+        // right controls (volume + like)
+        JPanel rightControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightControls.setOpaque(false);
+        JLabel volIcon = new JLabel("🔊");
+        volIcon.setForeground(TEXT);
+        JSlider volume = new JSlider(0, 100, 75);
+        volume.setPreferredSize(new Dimension(120, 14));
+        volume.setOpaque(false);
+        JButton likeBtn = roundControlBtn("❤️");
+
+        rightControls.add(volIcon);
+        rightControls.add(volume);
+        rightControls.add(likeBtn);
+
+        bottomBar.add(rightControls, BorderLayout.EAST);
 
         // ---------- INTERACTIONS ----------
-        play.addActionListener(e -> nowPlaying.play());
-        next.addActionListener(e -> {
+        playBtn.addActionListener(e -> nowPlaying.play());
+
+        nextBtn.addActionListener(e -> {
             if (queue != null && !queue.isEmpty()) {
                 Song s = queue.removeFirst();
                 s.play();
-                songTitle.setText("Song title: " + s.getTitle());
-                songArtist.setText("Artist: " + (s instanceof Track ? ((Track)s).getArtist() : "Various"));
+                // update UI
+                title.setText(s.getTitle());
+                artist.setText((s instanceof Track) ? ((Track)s).getArtist() : "Various");
                 progress.setMaximum(s.getDuration());
+                endTime.setText(s.getFormattedDuration());
                 progLabel.setText("0:00 / " + s.getFormattedDuration());
-                // artwork leaving as-is for simplicity
+                // attempt to load artwork kept same (or replace if you provide per-song art)
             } else {
                 JOptionPane.showMessageDialog(frame, "Queue is empty");
             }
         });
 
-        // update label when slider moves
-        progress.addChangeListener(e -> {
+        progress.addChangeListener((ChangeEvent e) -> {
             int v = progress.getValue();
+            startTime.setText(formatTime(v));
             progLabel.setText(formatTime(v) + " / " + nowPlaying.getFormattedDuration());
         });
 
-        // playlist click
-        playlistsJ.addListSelectionListener((ListSelectionListener) e -> {
+        playlistList.addListSelectionListener((ListSelectionListener) e -> {
             if (!e.getValueIsAdjusting()) {
-                String sel = playlistsJ.getSelectedValue();
+                String sel = playlistList.getSelectedValue();
                 JOptionPane.showMessageDialog(frame, "Selected playlist: " + sel);
             }
         });
 
-        // ---------- FINAL LAYOUT ----------
+        // Final assembly
         frame.add(sidebar, BorderLayout.WEST);
         frame.add(center, BorderLayout.CENTER);
-        frame.add(bottom, BorderLayout.SOUTH);
+        frame.add(bottomBar, BorderLayout.SOUTH);
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    // helper to create sidebar buttons
+    // helper: sidebar button
     private static JButton makeSidebarButton(String text) {
         JButton b = new JButton(text);
         b.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -260,12 +273,12 @@ public class SpotifyGUI {
         b.setBackground(ACCENT);
         b.setForeground(Color.WHITE);
         b.setFocusPainted(false);
-        b.setBorder(BorderFactory.createEmptyBorder(8,12,8,12));
+        b.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         b.setOpaque(true);
         return b;
     }
 
-    // control button style
+    // helper: control button (plain)
     private static JButton controlBtn(String emoji) {
         JButton b = new JButton(emoji);
         b.setFocusPainted(false);
@@ -274,7 +287,18 @@ public class SpotifyGUI {
         b.setForeground(TEXT);
         b.setFont(b.getFont().deriveFont(16f));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setPreferredSize(new Dimension(36,36));
+        b.setPreferredSize(new Dimension(36, 36));
+        return b;
+    }
+
+    // helper: rounded control (for like)
+    private static JButton roundControlBtn(String emoji) {
+        JButton b = new JButton(emoji);
+        b.setFocusPainted(false);
+        b.setForeground(Color.WHITE);
+        b.setBackground(new Color(40,40,40));
+        b.setOpaque(true);
+        b.setBorder(BorderFactory.createEmptyBorder(6,10,6,10));
         return b;
     }
 

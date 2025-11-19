@@ -87,7 +87,8 @@ public class SpotifyMain {
         // ------------------------
         System.out.println("--- File Operations ---");
         try {
-            FileManager.savePlaylistsAsDTO(allPlaylists, PLAYLISTS_FILE, v);
+            FileManager.savePlaylistsAsDTO(allPlaylists, PLAYLISTS_FILE);
+
             System.out.println("💾 Saved playlists.");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
